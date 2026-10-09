@@ -1,0 +1,10 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "dev-flow",
+  "version": "0.2.0",
+  "description": "编码过程中每完成一个方法/文件/逻辑块，就自动输出一段流水线提示；附带 PostToolUse hook 保证必定触发，无需手动配置。",
+  "author": {
+    "name": "Forest-hut-for-cats-and-rabbits"
+  },
+  "homepage": "https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow"
+}

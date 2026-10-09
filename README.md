@@ -63,7 +63,18 @@ git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git ~/.cla
 git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git "$env:USERPROFILE\.claude\skills\dev-flow"
 ```
 
-放在 `~/.claude/skills/<name>/` 下的插件会被**自动识别**（Claude Code 称其为 `dev-flow@skills-dir`），**下次启动会话时生效**，hook 同样一并加载。
+放在 `~/.claude/skills/<name>/` 下的目录会被**自动识别**（Claude Code 称其为 `dev-flow@skills-dir`），hook 一并加载。
+
+识别条件是目录里必须有 **`.claude-plugin/plugin.json`** —— 只放 `marketplace.json` 是不够的，那样 `~/.claude/skills/` 的扫描器只会把它当普通目录跳过，`/plugin` 里看不到任何东西。
+
+生效时机：**下次启动会话时**自动加载；想立刻生效，在会话里输入 `/reload-plugins`。
+
+自查是否已加载：
+
+```bash
+claude plugin list        # 看 "Skills-directory plugins" 一节里有没有 dev-flow@skills-dir
+claude plugin details dev-flow
+```
 
 ## 为什么需要 hook（重要）
 
@@ -126,7 +137,8 @@ bash <插件目录>/skills/dev-flow/scripts/gather.sh all      # 看工作区相
 ```
 dev-flow/
 ├── .claude-plugin/
-│   └── marketplace.json      # 市场清单（本仓库即市场）
+│   ├── marketplace.json      # 市场清单（本仓库即市场）
+│   └── plugin.json           # 插件清单（也是 skills-dir 自动加载的识别条件）
 ├── skills/
 │   └── dev-flow/
 │       ├── SKILL.md          # 技能本体
