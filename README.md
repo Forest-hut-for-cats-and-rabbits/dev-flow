@@ -4,9 +4,7 @@ Claude Code 自动流水线提示技能 —— 编码过程中每完成一段代
 
 A Claude Code skill that streams pipeline-style progress notes while the AI codes — no manual trigger needed.
 
-> **先读这一条**：这个技能**不是「装上就自动生效」**的。
-> Claude Code 里 skill 的自动触发本质上是「模型看到描述后自觉调用」，没有任何强制力——长任务里模型埋头改代码时基本不会想起来调它。要让提示**每次改完文件必定出现**，必须再配一个 `PostToolUse` hook（见「安装」第 2 步）。
-> 只 clone 技能、不配 hook，等于没装。
+本仓库同时是 **Claude Code 插件市场**和**插件本体**，用 `/plugin install` 一条命令即可安装，**技能与 hook 一起到位**，无需手工改 `settings.json`。
 
 ## 它做什么
 
@@ -33,9 +31,27 @@ A Claude Code skill that streams pipeline-style progress notes while the AI code
 
 ## 安装
 
-### 第 1 步：下载技能
+### 方式一：插件市场安装（推荐）
 
-把本仓库克隆到 Claude Code 的技能目录：
+在 Claude Code 会话里：
+
+```
+/plugin marketplace add Forest-hut-for-cats-and-rabbits/dev-flow
+/plugin install dev-flow@dev-flow
+```
+
+或者用 CLI：
+
+```bash
+claude plugin marketplace add Forest-hut-for-cats-and-rabbits/dev-flow
+claude plugin install dev-flow@dev-flow
+```
+
+**一条命令装完技能 + hook**。插件自带的 `hooks/hooks.json` 会在安装时自动生效，不需要你再动 `settings.json`。
+
+安装后可用 `claude plugin list` 确认，`claude plugin uninstall dev-flow` 卸载。
+
+### 方式二：克隆到 skills 目录（不用插件系统时）
 
 ```bash
 # macOS / Linux / Git Bash
@@ -47,13 +63,21 @@ git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git ~/.cla
 git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git "$env:USERPROFILE\.claude\skills\dev-flow"
 ```
 
-技能目录不存在时先建：`mkdir -p ~/.claude/skills`。
+放在 `~/.claude/skills/<name>/` 下的插件会被**自动识别**（Claude Code 称其为 `dev-flow@skills-dir`），**下次启动会话时生效**，hook 同样一并加载。
 
-### 第 2 步：配置自动触发 hook（关键步骤）
+## 为什么需要 hook（重要）
 
-把下面这段合并进 `~/.claude/settings.json`：
+Claude Code 里 skill 的自动触发本质上是「模型看到 `description` 后自觉调用」，**没有任何强制力**——长任务里模型埋头改代码时基本不会想起来调它。
 
-> ⚠️ **合并，不要覆盖**。文件里已经有 `"hooks": { ... }` 的话，只把 `PostToolUse` 这一项填进去（它当前多半是 `[]`），其余键保持原样不动。
+所以本插件除了 skill 还带了一个 `PostToolUse` hook：每次 `Edit` / `Write` / `MultiEdit` 成功后，由 Claude Code **强制**把提示要求注入模型上下文。这一步是 harness 执行的，不依赖模型自觉，因此提示必定送达。
+
+**两者分工**：skill 提供提示的格式与规则，hook 负责保证触发。只装 skill 不装 hook，等于没装。
+
+### 可选：不用插件、手工配 hook
+
+如果你通过方式二克隆、又不想依赖 `skills-dir` 自动加载，可以把仓库里的 [`hooks.example.json`](./hooks.example.json) 合并进 `~/.claude/settings.json`：
+
+> ⚠️ **合并，不要覆盖**。文件里已有 `"hooks"` 的话，只把 `PostToolUse` 那一项填进去，其余键保持原样。
 
 ```json
 {
@@ -64,7 +88,6 @@ git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git "$env:
         "hooks": [
           {
             "type": "command",
-            "shell": "bash",
             "timeout": 10,
             "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"【dev-flow 流水线提示】你刚改完一个文件，请立刻输出一段流水线提示（=== 流水线 [当前步骤/总步骤] === / 文件：相对路径 / 做了什么：一句话 / 决策点：为什么这么写 / 下一步：接下来改什么），插在改动之间，不要攒到最后；纯问答或单行微小改动可省略。\"}}'"
           }
@@ -75,46 +98,59 @@ git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git "$env:
 }
 ```
 
-完整可复制的配置也见仓库里的 [`hooks.example.json`](./hooks.example.json)。
-
-**这个 hook 做了什么**：每次 `Edit` / `Write` / `MultiEdit` 成功后，由 Claude Code 自己把那段固定提醒**注入模型上下文**。这一步是 harness 执行的，不依赖模型自觉——所以提醒必定送达，模型想忽略都难。这就是它和「光装一个 skill」的本质区别。
-
-**改完不用重启**：Claude Code 会热加载 `settings.json`。如果你改完发现没生效，在会话里输入一次 `/hooks`（会重新读取配置）或重启会话。
-
-### 第 3 步：验证装好了没
-
-随便让 Claude 改一个文件。正常的话，你会在工具调用之后看到一条流水线提示；如果 Claude 输出了「=== 流水线 [1/N] ===」，说明已经生效。
+> 🚫 **别配重了**：插件自带的 hook 和 `settings.json` 里的手配 hook 会**各自注入一次**，导致每次编辑收到两条相同提醒。二选一即可——用插件就不要再手工配。
 
 ## 使用
 
-装好之后**不需要任何手动命令**——这是本技能与手动触发的 `/xxx` 类命令最大的区别：
+装好之后**不需要任何手动命令**：
 
 - 你正常提需求（「帮我改 XX 功能」「重构 YY 模块」），Claude 边写代码边输出流水线提示
 - 想回顾这次会话改了哪些文件，用辅助脚本（见下）
 
-技能本身靠 `SKILL.md` 的 `description` 匹配开发任务；**hook 负责保证触发**。两者配合，才能做到「一定出现」。
-
 ## 辅助脚本
 
-`scripts/gather.sh` 用于回顾本次会话的改动全貌（生成总览前用）：
+`skills/dev-flow/scripts/gather.sh` 用于回顾本次会话的改动全貌（生成总览前用）。路径相对于插件根目录：
 
 ```bash
-bash ~/.claude/skills/dev-flow/scripts/gather.sh          # auto: 有暂存看暂存区，否则看未暂存改动
-bash ~/.claude/skills/dev-flow/scripts/gather.sh staged   # 只看暂存区
-bash ~/.claude/skills/dev-flow/scripts/gather.sh all      # 看工作区相对 HEAD 的全部改动
+bash <插件目录>/skills/dev-flow/scripts/gather.sh          # auto: 有暂存看暂存区，否则看未暂存改动
+bash <插件目录>/skills/dev-flow/scripts/gather.sh staged   # 只看暂存区
+bash <插件目录>/skills/dev-flow/scripts/gather.sh all      # 看工作区相对 HEAD 的全部改动
 ```
+
+插件安装位置的查法：`claude plugin details dev-flow`，或在会话里输入 `/plugin` 查看。
 
 `MAX_DIFF_LINES` 环境变量控制 diff 截断行数（默认 2000）。
 
-## 卸载
+## 仓库结构
 
-```bash
-# 1. 删掉技能目录
-rm -rf ~/.claude/skills/dev-flow
-# 2. 从 ~/.claude/settings.json 的 hooks.PostToolUse 里删掉对应那一项
+```
+dev-flow/
+├── .claude-plugin/
+│   └── marketplace.json      # 市场清单（本仓库即市场）
+├── skills/
+│   └── dev-flow/
+│       ├── SKILL.md          # 技能本体
+│       └── scripts/gather.sh # 改动收集脚本
+├── hooks/
+│   └── hooks.json            # 随插件自动生效的 PostToolUse hook
+├── hooks.example.json        # 手工配置 hook 的样例（可选，插件安装不需要）
+└── README.md
 ```
 
-也可以临时停用：在 Claude Code 里输入 `/hooks` 关掉该 hook。
+本地开发/自检：
+
+```bash
+claude plugin validate .            # 校验市场与插件清单
+claude plugin validate . --strict   # CI 级：警告也当错误
+```
+
+## 卸载
+
+```
+/plugin uninstall dev-flow@dev-flow
+```
+
+手工配过 hook 的，再从 `~/.claude/settings.json` 的 `hooks.PostToolUse` 里删掉对应项。
 
 ## License
 
