@@ -1,8 +1,8 @@
 # dev-flow
 
-Claude Code 轻量开发与理解技能：在编码时播报短流水线，解释关键决策，并用实际验证和重点代码走读帮助你说清“怎么解决的”。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。
+轻量开发与理解技能：在编码时播报短流水线，解释关键决策，并用实际验证和重点代码走读帮助你说清“怎么解决的”。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。Claude Code 可直接安装为插件；Codex 可安装同一份技能正文，但不会加载本仓库的 Claude Code hook。
 
-A Claude Code plugin for concise progress notes, evidence-based walkthroughs, and on-demand project memory.
+A development workflow skill for Claude Code and Codex: concise progress notes, evidence-based walkthroughs, and on-demand project memory.
 
 ## 日常使用
 
@@ -111,17 +111,47 @@ hook 只提醒短进度，不负责加载全部维护指南，也不要求每次
 
 不使用插件 hook 时，可将 [hooks.example.json](hooks.example.json) 中相应的 `PostToolUse` 条目合并进现有 `~/.claude/settings.json`；不要覆盖其他设置。插件 hook 和手工配置二选一，避免每次编辑注入重复提醒。仅手工配置 hook 不会自动安装技能正文。
 
+## 在 Codex 中使用
+
+Codex 读取技能正文、参考文档和脚本，不使用 `.claude-plugin/` 清单，也不会加载 Claude Code 的 `PostToolUse` hook。因此在 Codex 中，日常流水线、代码走读和按需维护依赖技能规则本身，没有编辑后由客户端强制注入的提醒。
+
+Codex 会扫描工作目录到仓库根目录范围内的 `.agents/skills`，以及用户目录下的 `~/.agents/skills`。推荐把本仓库的 `skills/dev-flow` 作为独立技能安装到用户目录，目标结构如下：
+
+```text
+~/.agents/skills/dev-flow/
+├── SKILL.md
+├── references/
+└── scripts/
+```
+
+从仓库复制时保留 `SKILL.md` 及其相对引用的文件。下面假定插件仓库已克隆到 `~/.claude/skills/dev-flow`，其他位置请替换 `$source`：
+
+```powershell
+$source = "$env:USERPROFILE\.claude\skills\dev-flow\skills\dev-flow"  # 仓库实际位置
+$target = "$env:USERPROFILE\.agents\skills\dev-flow"
+
+New-Item -ItemType Directory -Force -Path $target | Out-Null
+Copy-Item -LiteralPath "$source\SKILL.md" -Destination "$target\SKILL.md" -Force
+Copy-Item -LiteralPath "$source\references" -Destination "$target\references" -Recurse -Force
+Copy-Item -LiteralPath "$source\scripts" -Destination "$target\scripts" -Recurse -Force
+```
+
+目标目录已有同名技能时先核对版本并保留可恢复副本，避免同名的新旧内容同时出现。`SKILL.md` 中的相对链接需要与 `references/`、`scripts/` 一起复制。
+
+更新后在 Codex 中通过 `$` 选择 `dev-flow`，或直接写明“使用 dev-flow 完成这个需求”。任务描述与技能说明相符时，Codex 也可能自动选用。技能列表没有反映更新时重新启动 Codex。需要项目级开发约定时继续使用项目的 `AGENTS.md`；它不会自动获得本技能的项目记忆或代码走读规则。
+
 ## 辅助脚本
 
-`skills/dev-flow/scripts/gather.sh` 收集当前 Git 仓库快照。先通过 `claude plugin list` 确定实际插件路径，再在目标项目中运行；下面的 `<插件目录>` 需要替换为实际路径：
+`skills/dev-flow/scripts/gather.sh` 收集当前 Git 仓库快照。它在目标项目中运行，不会自动识别“本次会话”的改动。先通过 `claude plugin list` 确定 Claude Code 插件路径；从 Codex 用户目录安装时，脚本位于 `~/.agents/skills/dev-flow/scripts/`：
 
 ```bash
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" auto
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" staged
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" all
+bash "$HOME/.agents/skills/dev-flow/scripts/gather.sh" all
 ```
 
-本地克隆位置的示例：
+Claude Code 本地克隆位置的示例：
 
 ```bash
 bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all
@@ -138,12 +168,12 @@ bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all
 ## 结构与校验
 
 ```text
-.claude-plugin/                # 插件及市场清单
-skills/dev-flow/SKILL.md       # 日常工作流与按需入口
-skills/dev-flow/references/maintenance.md
-skills/dev-flow/scripts/gather.sh
-hooks/hooks.json              # 插件 hook
-hooks.example.json            # 手工配置替代方案
+.claude-plugin/                 # Claude Code 插件及市场清单
+skills/dev-flow/SKILL.md        # Claude Code 与 Codex 共用的技能正文
+skills/dev-flow/references/     # 按需加载的维护指南
+skills/dev-flow/scripts/        # gather.sh
+hooks/hooks.json               # 仅 Claude Code 插件使用
+hooks.example.json             # 仅 Claude Code 手工配置使用
 ```
 
 在插件根目录运行本地校验：
@@ -153,11 +183,13 @@ claude plugin validate . --strict
 claude plugin validate .claude-plugin/plugin.json --strict
 ```
 
-另需检查技能 YAML frontmatter、hook JSON、实际 Bash 输出、相对链接，并在隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
+另需检查技能 YAML frontmatter、hook JSON、实际 Bash 输出、相对链接，并在隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。Codex 应检查安装目录中的 `SKILL.md` 和参考文件是否完整，无需检查 Claude Code 清单或 hook。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
 
 ## 卸载
 
-市场安装使用 `/plugin uninstall dev-flow@dev-flow`。本地目录方式按客户端提供的管理能力处理；如有手工 hook，仅移除对应条目，不覆盖其他配置。卸载技能不会自动删除各项目的任务记录。
+Claude Code 市场安装使用 `/plugin uninstall dev-flow@dev-flow`。本地目录方式按客户端提供的管理能力处理；如有手工 hook，仅移除对应条目，不覆盖其他配置。
+
+Codex 用户目录安装会生成 `~/.agents/skills/dev-flow/`；确认该目录确属本技能后，可按 Codex 客户端支持的方式移除，或删除该技能目录。仓库级安装则移除对应的 `.agents/skills/dev-flow/`。卸载技能不会自动删除各项目的任务记录。
 
 ## License
 
