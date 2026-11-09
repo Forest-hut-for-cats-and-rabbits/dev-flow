@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dev-flow",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "持续编码中的短流水线、关键决策、验证证据与代码走读；按需进行失败重诊断、项目记忆和交接复盘，附带编辑后提醒 hook。",
   "author": {
     "name": "Forest-hut-for-cats-and-rabbits"

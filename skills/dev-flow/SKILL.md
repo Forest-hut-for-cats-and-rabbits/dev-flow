@@ -65,13 +65,16 @@ allowed-tools: Bash, Read, Grep, Glob
 
 ## 辅助工具与边界
 
-需要补充查看仓库当前改动时，在目标项目中运行本技能目录下的脚本。下面的路径是占位说明，先确定实际插件目录再替换；不要在插件仓库中收集另一个项目的 diff。
+需要补充查看仓库当前改动时，在目标项目中运行本技能目录下的脚本。先根据当前客户端找到包含本 `SKILL.md` 的目录，再使用该目录下的 `scripts/gather.sh`；不要在插件仓库中收集另一个项目的 diff。
 
 ```bash
-bash "<插件目录>/skills/dev-flow/scripts/gather.sh" all
+bash "<本技能目录>/scripts/gather.sh" all
+bash "$HOME/.agents/skills/dev-flow/scripts/gather.sh" all  # Codex 直接安装
+bash "$HOME/.agents/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all  # Codex 插件式仓库
+bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all  # Claude Code 本地插件仓库
 ```
 
-用 `claude plugin details dev-flow` 确认来源，`claude plugin list` 查看安装位置；本地克隆默认在 `~/.claude/skills/dev-flow`。
+Claude Code 可用 `claude plugin details dev-flow` 和 `claude plugin list` 确认安装位置；Codex 的路径来自实际技能目录。示例路径需要按客户端的安装方式选择其中一条，不把它们同时当作有效路径。
 
 - `auto`：默认，有暂存改动就只展示暂存 patch，否则展示未暂存 patch；混合状态会遗漏另一部分正文。
 - `staged`：只展示暂存 patch。`all`：有 HEAD 时展示相对 HEAD 的已跟踪文件最终差异，暂存和未暂存相互抵消的变化需分别查看；没有 HEAD 时回退到脚本的暂存优先逻辑。
