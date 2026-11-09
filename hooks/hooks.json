@@ -1,5 +1,5 @@
 {
-  "description": "dev-flow 自动流水线提示 —— 每次编辑文件后把提示要求注入模型上下文，保证必定触发",
+  "description": "dev-flow 编辑后短流水线提醒；成功注入上下文不代表模型必然遵循。",
   "hooks": {
     "PostToolUse": [
       {
@@ -7,8 +7,9 @@
         "hooks": [
           {
             "type": "command",
+            "shell": "bash",
             "timeout": 10,
-            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"【dev-flow 流水线提示】你刚改完一个文件，请立刻输出一段流水线提示（=== 流水线 [当前步骤/总步骤] === / 文件：相对路径 / 做了什么：一句话 / 决策点：为什么这么写 / 下一步：接下来改什么），插在改动之间，不要攒到最后；纯问答或单行微小改动可省略。\"}}'"
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"【dev-flow】长开发任务完成一次编辑后，请在继续修改前播报五行短流水线：=== 流水线 [当前步骤/总步骤] === / 文件：相对路径，可附函数 / 做了什么：业务行为变化 / 决策点：有依据的选择原因 / 下一步：接下来要做什么。编号对应现有计划；同一次改动完成方法、文件等多个节点时只播报一次。独立的微小改动和纯问答可省略。这里只提醒进度，不要求逐步确认、答题、每次落盘记忆或输出完整复盘；交付与按需维护遵循 dev-flow 技能。\"}}'"
           }
         ]
       }

@@ -1,168 +1,163 @@
 # dev-flow
 
-Claude Code 自动流水线提示技能 —— 编码过程中每完成一段代码，就自动输出一段简短的流水线提示，让 AI 的开发过程像流水线一样可见、可追溯。
+Claude Code 轻量开发与理解技能：在编码时播报短流水线，解释关键决策，并用实际验证和重点代码走读帮助你说清“怎么解决的”。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。
 
-A Claude Code skill that streams pipeline-style progress notes while the AI codes — no manual trigger needed.
+A Claude Code plugin for concise progress notes, evidence-based walkthroughs, and on-demand project memory.
 
-本仓库同时是 **Claude Code 插件市场**和**插件本体**，用 `/plugin install` 一条命令即可安装，**技能与 hook 一起到位**，无需手工改 `settings.json`。
+## 日常使用
 
-## 它做什么
+正常提出开发需求即可。客户端可以依据技能描述选用 dev-flow，也可以显式要求“使用 dev-flow”。默认工作流：
 
-当 Claude Code 在做开发任务（多文件改动、新功能、重构、修 bug 等持续编码场景）时，**每完成以下任一节点，立刻输出一段流水线提示，然后再继续写下一处代码**——不等整个任务结束才总结：
-
-1. 完成一个方法 / 函数的编写
-2. 改完一个文件（即使只改一行）
-3. 完成一个逻辑块（拦截器、Service 方法、配置等）
-4. 做出一个关键决策（方案选型、为什么这么改）
-
-### 提示格式
-
+```text
+按需定位与经验检索 → 简短任务地图 → 实现与决策播报
+→ 实际验证 → 重点代码走读 → 按价值沉淀 → 可选理解题
 ```
+
+- 开工时定位任务入口、直接依赖和相关测试，说明目标、调用链、边界及验收方式；信息充分时自动继续。
+- 长任务每完成方法、文件、逻辑块或关键决策就播报；同一次编辑满足多个条件时只播报一次。
+- 完工后合并给出完整链路、最多三个关键代码位置、已执行与未执行的验证，以及可向 QA 复述的简短说明。
+- 有实质业务逻辑时给一道行为预测题；不同时给答案，不要求答完才能继续。你跳过或提出新任务时正常推进。
+- 独立的微小修改、纯问答不执行完整流程，不新增记忆文档，不出理解题。
+
+流水线保持五行：
+
+```text
 === 流水线 [当前步骤/总步骤] ===
-文件：<相对路径>
-做了什么：<一句话，说清这段代码的作用>
-决策点：<为什么这么写 / 有没有别的选择>
+文件：<相对路径，可附函数或行号>
+做了什么：<业务行为发生了什么变化>
+决策点：<有依据的选择原因>
 下一步：<接下来要改什么>
 ```
 
-整个任务结束后，还会输出一次**总览**，把所有节点串成一条完整流水线。
+用户要求先讨论、暂停或禁止写文档时，以用户要求为准。技能不会自动切换模型、调整推理配置或提交 Git。
 
-纯问答、纯解释、不改代码的对话不触发；单行微小改动（改错别字等）可省略。
+## 失败重诊断与按需维护
 
-## 安装
+同一问题连续两次修复后仍未通过对应验证，或根因假设被新证据否定时，先重新核对目标、复现证据和已有尝试，再用最小验证判断方向。有新证据后继续，不盲目叠加补丁，也不自动回滚用户改动。普通编译错误修正不机械触发该流程。
 
-### 方式一：插件市场安装（推荐）
+项目记忆优先复用已有任务文档、索引与交接约定。没有既有约定且首次确实需要沉淀时，才按需创建：
 
-在 Claude Code 会话里：
-
+```text
+docs/dev-flow/
+├── index.md                   # 主题、适用场景、状态、记录链接
+├── tasks/YYYY-MM-DD-任务名.md  # 有复用价值的任务及验证证据
+└── NOW.md                     # 仅在需要跨会话接续时使用
 ```
+
+普通任务优先补充已有记录；重要约束、隐蔽 bug、返工经验和关键设计值得精简保存。微小改动不新增记录，同一任务更新同一份文档，不按每次编辑或每轮对话累积文件。
+
+记录保留最终目标、决策原因、实际验证、适用边界和代码定位。已有需求则链接，改动正文由 Git 保存，不复制完整需求、聊天或 diff。验证受阻的结论标为待验证；没有提交时明确“未提交”，不借用当前 HEAD 冒充修复版本。
+
+下次先检索相关经验，再核对当前代码与需求。旧结论失效时更新或标记替代关系，修正索引；不让新旧结论同时作为有效指导。事实记录可在开发授权范围内自动更新，用户或项目禁止写文档时仅在回复中提供摘要。
+
+按需使用示例：
+
+- “我要换个窗口，把这个任务的当前状态和下一步保存好。”
+- “复盘这次返工，先给出改进候选，不要修改全局规则。”
+- “先让我回答刚才的理解题，再结合代码指出遗漏。”
+
+交接保存当前有效状态，不追加整段历史；任务结束后更新完成状态。复盘仅依据实际可见或指定资料，不自动扫描所有聊天。长期规则或技能的修改须有明确请求，并先备份；不会把一次偶然错误自动升级为全局约束。
+
+这些记录用于改善上下文与经验复用，不会训练模型参数，也不保证模型自动变强。默认采用 Markdown、索引和关键词检索，不需要向量数据库、后台服务或额外运行依赖。
+
+## 安装与生效
+
+本仓库同时提供插件本体和插件市场。选择一种安装方式，避免同一 hook 被加载两次。
+
+### 插件市场
+
+在 Claude Code 中执行：
+
+```text
 /plugin marketplace add Forest-hut-for-cats-and-rabbits/dev-flow
 /plugin install dev-flow@dev-flow
 ```
 
-或者用 CLI：
+或通过 CLI：
 
 ```bash
 claude plugin marketplace add Forest-hut-for-cats-and-rabbits/dev-flow
 claude plugin install dev-flow@dev-flow
 ```
 
-**一条命令装完技能 + hook**。插件自带的 `hooks/hooks.json` 会在安装时自动生效，不需要你再动 `settings.json`。
+安装版本取决于市场仓库的实际内容；本地修改不会自动发布到市场。
 
-安装后可用 `claude plugin list` 确认，`claude plugin uninstall dev-flow` 卸载。
+### 本地目录
 
-### 方式二：克隆到 skills 目录（不用插件系统时）
+支持 skills-directory 插件的 Claude Code 可从以下位置加载；该方式在本机 Claude Code 2.1.318 可识别为 `dev-flow@skills-dir`：
 
 ```bash
-# macOS / Linux / Git Bash
 git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git ~/.claude/skills/dev-flow
 ```
 
 ```powershell
-# Windows PowerShell
 git clone https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow.git "$env:USERPROFILE\.claude\skills\dev-flow"
 ```
 
-放在 `~/.claude/skills/<name>/` 下的目录会被**自动识别**（Claude Code 称其为 `dev-flow@skills-dir`），hook 一并加载。
-
-识别条件是目录里必须有 **`.claude-plugin/plugin.json`** —— 只放 `marketplace.json` 是不够的，那样 `~/.claude/skills/` 的扫描器只会把它当普通目录跳过，`/plugin` 里看不到任何东西。
-
-生效时机：**下次启动会话时**自动加载；想立刻生效，在会话里输入 `/reload-plugins`。
-
-自查是否已加载：
+已有目录时直接维护其中的文件，不要重新克隆覆盖。保留 `.claude-plugin/plugin.json` 和 `skills/dev-flow/SKILL.md` 的层级，确认加载情况：
 
 ```bash
-claude plugin list        # 看 "Skills-directory plugins" 一节里有没有 dev-flow@skills-dir
+claude plugin list
 claude plugin details dev-flow
 ```
 
-## 为什么需要 hook（重要）
+修改后在新会话加载；客户端支持时也可使用 `/reload-plugins`。检查详情中的版本和组件清单，是否实际产生期望的流水线仍需在开发会话中观察。
 
-Claude Code 里 skill 的自动触发本质上是「模型看到 `description` 后自觉调用」，**没有任何强制力**——长任务里模型埋头改代码时基本不会想起来调它。
+## Hook 的作用与边界
 
-所以本插件除了 skill 还带了一个 `PostToolUse` hook：每次 `Edit` / `Write` / `MultiEdit` 成功后，由 Claude Code **强制**把提示要求注入模型上下文。这一步是 harness 执行的，不依赖模型自觉，因此提示必定送达。
+插件自带 `hooks/hooks.json`，匹配 `Edit|Write|MultiEdit` 成功后的 `PostToolUse`。它使用 Bash 输出提醒 JSON；Windows 使用 Claude Code 配置的 Git Bash。成功执行表示提醒可被注入，不代表模型必然遵循；其他工具或 shell 脚本完成的编辑不在该 matcher 范围内。
 
-**两者分工**：skill 提供提示的格式与规则，hook 负责保证触发。只装 skill 不装 hook，等于没装。
+hook 只提醒短进度，不负责加载全部维护指南，也不要求每次编辑写记忆、复盘或等待确认。技能正文负责完整工作流。没有 hook 时技能仍可被选用，但缺少编辑后的重复提醒。
 
-### 可选：不用插件、手工配 hook
-
-如果你通过方式二克隆、又不想依赖 `skills-dir` 自动加载，可以把仓库里的 [`hooks.example.json`](./hooks.example.json) 合并进 `~/.claude/settings.json`：
-
-> ⚠️ **合并，不要覆盖**。文件里已有 `"hooks"` 的话，只把 `PostToolUse` 那一项填进去，其余键保持原样。
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "timeout": 10,
-            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"【dev-flow 流水线提示】你刚改完一个文件，请立刻输出一段流水线提示（=== 流水线 [当前步骤/总步骤] === / 文件：相对路径 / 做了什么：一句话 / 决策点：为什么这么写 / 下一步：接下来改什么），插在改动之间，不要攒到最后；纯问答或单行微小改动可省略。\"}}'"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-> 🚫 **别配重了**：插件自带的 hook 和 `settings.json` 里的手配 hook 会**各自注入一次**，导致每次编辑收到两条相同提醒。二选一即可——用插件就不要再手工配。
-
-## 使用
-
-装好之后**不需要任何手动命令**：
-
-- 你正常提需求（「帮我改 XX 功能」「重构 YY 模块」），Claude 边写代码边输出流水线提示
-- 想回顾这次会话改了哪些文件，用辅助脚本（见下）
+不使用插件 hook 时，可将 [hooks.example.json](hooks.example.json) 中相应的 `PostToolUse` 条目合并进现有 `~/.claude/settings.json`；不要覆盖其他设置。插件 hook 和手工配置二选一，避免每次编辑注入重复提醒。仅手工配置 hook 不会自动安装技能正文。
 
 ## 辅助脚本
 
-`skills/dev-flow/scripts/gather.sh` 用于回顾本次会话的改动全貌（生成总览前用）。路径相对于插件根目录：
+`skills/dev-flow/scripts/gather.sh` 收集当前 Git 仓库快照。先通过 `claude plugin list` 确定实际插件路径，再在目标项目中运行；下面的 `<插件目录>` 需要替换为实际路径：
 
 ```bash
-bash <插件目录>/skills/dev-flow/scripts/gather.sh          # auto: 有暂存看暂存区，否则看未暂存改动
-bash <插件目录>/skills/dev-flow/scripts/gather.sh staged   # 只看暂存区
-bash <插件目录>/skills/dev-flow/scripts/gather.sh all      # 看工作区相对 HEAD 的全部改动
+bash "<插件目录>/skills/dev-flow/scripts/gather.sh" auto
+bash "<插件目录>/skills/dev-flow/scripts/gather.sh" staged
+bash "<插件目录>/skills/dev-flow/scripts/gather.sh" all
 ```
 
-插件安装位置的查法：`claude plugin details dev-flow`，或在会话里输入 `/plugin` 查看。
-
-`MAX_DIFF_LINES` 环境变量控制 diff 截断行数（默认 2000）。
-
-## 仓库结构
-
-```
-dev-flow/
-├── .claude-plugin/
-│   ├── marketplace.json      # 市场清单（本仓库即市场）
-│   └── plugin.json           # 插件清单（也是 skills-dir 自动加载的识别条件）
-├── skills/
-│   └── dev-flow/
-│       ├── SKILL.md          # 技能本体
-│       └── scripts/gather.sh # 改动收集脚本
-├── hooks/
-│   └── hooks.json            # 随插件自动生效的 PostToolUse hook
-├── hooks.example.json        # 手工配置 hook 的样例（可选，插件安装不需要）
-└── README.md
-```
-
-本地开发/自检：
+本地克隆位置的示例：
 
 ```bash
-claude plugin validate .            # 校验市场与插件清单
-claude plugin validate . --strict   # CI 级：警告也当错误
+bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all
 ```
+
+- `auto` 默认有暂存就展示暂存 patch，否则展示未暂存 patch；混合状态会遗漏另一部分正文。
+- `staged` 只展示暂存 patch。
+- `all` 有 HEAD 时展示已跟踪文件相对 HEAD 的最终差异；相互抵消的暂存和未暂存变化需分别检查。无 HEAD 时回退到暂存优先逻辑。
+- 未跟踪文件仅列名，不包含正文；按需读取本任务相关文件。
+- `MAX_DIFF_LINES` 控制 patch 截断行数，默认 2000；截断后按文件补查。
+
+快照不证明“这些都是本次会话修改”，也不证明测试通过。结合初始状态与实际编辑记录归纳，无法区分时明确说明；脚本报错或空输出不能被当作没有改动。
+
+## 结构与校验
+
+```text
+.claude-plugin/                # 插件及市场清单
+skills/dev-flow/SKILL.md       # 日常工作流与按需入口
+skills/dev-flow/references/maintenance.md
+skills/dev-flow/scripts/gather.sh
+hooks/hooks.json              # 插件 hook
+hooks.example.json            # 手工配置替代方案
+```
+
+在插件根目录运行本地校验：
+
+```bash
+claude plugin validate . --strict
+claude plugin validate .claude-plugin/plugin.json --strict
+```
+
+另需检查技能 YAML frontmatter、hook JSON、实际 Bash 输出、相对链接，并在隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
 
 ## 卸载
 
-```
-/plugin uninstall dev-flow@dev-flow
-```
-
-手工配过 hook 的，再从 `~/.claude/settings.json` 的 `hooks.PostToolUse` 里删掉对应项。
+市场安装使用 `/plugin uninstall dev-flow@dev-flow`。本地目录方式按客户端提供的管理能力处理；如有手工 hook，仅移除对应条目，不覆盖其他配置。卸载技能不会自动删除各项目的任务记录。
 
 ## License
 

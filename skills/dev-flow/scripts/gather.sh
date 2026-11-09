@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gather.sh — 为 dev-flow 流水线收集本次会话的代码改动上下文
+# gather.sh — 收集当前 Git 仓库的改动快照，不判断会话归属或验证结果
 # 用法: bash gather.sh [auto|staged|all]
 #   auto   (默认) 有暂存改动就看暂存区，否则看工作区未暂存改动
 #   staged 强制只看暂存区
@@ -12,7 +12,7 @@ MODE="${1:-auto}"
 MAX_DIFF_LINES="${MAX_DIFF_LINES:-2000}"
 
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  echo "ERROR: 当前目录不是 git 仓库，dev-flow 需要 git 来定位本次改动"
+  echo "ERROR: 当前目录不是 git 仓库，gather.sh 需要在目标项目的 Git 工作区运行"
   exit 2
 fi
 

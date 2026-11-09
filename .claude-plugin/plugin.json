@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dev-flow",
-  "version": "0.2.0",
-  "description": "编码过程中每完成一个方法/文件/逻辑块，就自动输出一段流水线提示；附带 PostToolUse hook 保证必定触发，无需手动配置。",
+  "version": "0.3.0",
+  "description": "持续编码中的短流水线、关键决策、验证证据与代码走读；按需进行失败重诊断、项目记忆和交接复盘，附带编辑后提醒 hook。",
   "author": {
     "name": "Forest-hut-for-cats-and-rabbits"
   },
