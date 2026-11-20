@@ -1,33 +1,24 @@
 # dev-flow
 
-轻量开发与理解技能：在编码时播报短流水线，解释关键决策，并用实际验证和重点代码走读帮助你说清“怎么解决的”。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。Claude Code 可直接安装为插件；Codex 可安装同一份技能正文，但不会加载本仓库的 Claude Code hook。
+轻量开发与理解技能：每完成一个业务就结合代码汇总流程节点；编码结束后直接使用子代理独立测试，再给出需求核心问题和答案。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。Claude Code 可直接安装为插件；Codex 可安装同一份技能正文。
 
-A development workflow skill for Claude Code and Codex: concise progress notes, evidence-based walkthroughs, and on-demand project memory.
+A development workflow skill for Claude Code and Codex: business-flow walkthroughs, independent subagent testing, and evidence-backed questions and answers.
 
 ## 日常使用
 
 正常提出开发需求即可。客户端可以依据技能描述选用 dev-flow，也可以显式要求“使用 dev-flow”。默认工作流：
 
 ```text
-按需定位与经验检索 → 简短任务地图 → 实现与决策播报
-→ 实际验证 → 重点代码走读 → 按价值沉淀 → 可选理解题
+按需定位与经验检索 → 简短任务地图 → 业务实现与代码节点汇总
+→ 编码结束 → 子代理独立测试 → 修复与复测 → 核心问题及答案 → 按价值沉淀
 ```
 
 - 开工时定位任务入口、直接依赖和相关测试，说明目标、调用链、边界及验收方式；信息充分时自动继续。
-- 长任务每完成方法、文件、逻辑块或关键决策就播报；同一次编辑满足多个条件时只播报一次。
-- 完工后合并给出完整链路、最多三个关键代码位置、已执行与未执行的验证，以及可向 QA 复述的简短说明。
-- 有实质业务逻辑时给一道行为预测题；不同时给答案，不要求答完才能继续。你跳过或提出新任务时正常推进。
-- 独立的微小修改、纯问答不执行完整流程，不新增记忆文档，不出理解题。
-
-流水线保持五行：
-
-```text
-=== 流水线 [当前步骤/总步骤] ===
-文件：<相对路径，可附函数或行号>
-做了什么：<业务行为发生了什么变化>
-决策点：<有依据的选择原因>
-下一步：<接下来要改什么>
-```
+- 每个可独立验收的业务实现后，说明入口、关键判断、数据或状态变化和结果，关联具体文件与函数；重要异常分支一并解释。多个文件共同完成一个业务时合并汇总，只有一个业务时可与交付合并。尚未测试时标注待独立测试。
+- 编码结束后直接调用可用的子代理，按原始需求与验收条件独立运行适当的检查。测试最终修改后的代码，覆盖场景随改动影响选择；发现问题由主代理修复后交回子代理复测。
+- 完工后合并给出业务链路、实际测试证据、未验证项，以及需求核心问题和对应答案。答案引用代码，涉及运行行为时关联测试证据；默认不留题等待用户作答。
+- 子代理不可用或执行受阻时，主代理运行能完成的检查，并明确“未完成独立测试”，不把自测或静态走读称为独立测试通过。委派与报告要求见 [独立测试指南](skills/dev-flow/references/independent-testing.md)。
+- 纯问答、纯解释或仅调整说明文档时不启动代码测试子代理、不强加业务问答；微小代码改动仍进行相称的独立检查，缩短汇总，不强凑测试用例。这些任务不自动新增记忆文档。
 
 用户要求先讨论、暂停或禁止写文档时，以用户要求为准。技能不会自动切换模型、调整推理配置或提交 Git。
 
@@ -54,7 +45,7 @@ docs/dev-flow/
 
 - “我要换个窗口，把这个任务的当前状态和下一步保存好。”
 - “复盘这次返工，先给出改进候选，不要修改全局规则。”
-- “先让我回答刚才的理解题，再结合代码指出遗漏。”
+- “汇总这个需求的关键业务问题，直接给出答案和对应的代码、测试依据。”
 
 交接保存当前有效状态，不追加整段历史；任务结束后更新完成状态。复盘仅依据实际可见或指定资料，不自动扫描所有聊天。长期规则或技能的修改须有明确请求，并先备份；不会把一次偶然错误自动升级为全局约束。
 
@@ -62,7 +53,7 @@ docs/dev-flow/
 
 ## 安装与生效
 
-本仓库同时提供插件本体和插件市场。选择一种安装方式，避免同一 hook 被加载两次。
+本仓库同时提供插件本体和插件市场。选择一种安装方式。
 
 ### 插件市场
 
@@ -101,19 +92,15 @@ claude plugin list
 claude plugin details dev-flow
 ```
 
-修改后在新会话加载；客户端支持时也可使用 `/reload-plugins`。检查详情中的版本和组件清单，是否实际产生期望的流水线仍需在开发会话中观察。
+修改后在新会话加载；客户端支持时也可使用 `/reload-plugins`。检查详情中的版本和组件清单，是否实际按预期提供业务节点、独立测试和核心问答仍需在开发会话中观察。
 
-## Hook 的作用与边界
+## 旧版提醒配置清理
 
-插件自带 `hooks/hooks.json`，匹配 `Edit|Write|MultiEdit` 成功后的 `PostToolUse`。它使用 Bash 输出提醒 JSON；Windows 使用 Claude Code 配置的 Git Bash。成功执行表示提醒可被注入，不代表模型必然遵循；其他工具或 shell 脚本完成的编辑不在该 matcher 范围内。
-
-hook 只提醒短进度，不负责加载全部维护指南，也不要求每次编辑写记忆、复盘或等待确认。技能正文负责完整工作流。没有 hook 时技能仍可被选用，但缺少编辑后的重复提醒。
-
-不使用插件 hook 时，可将 [hooks.example.json](hooks.example.json) 中相应的 `PostToolUse` 条目合并进现有 `~/.claude/settings.json`；不要覆盖其他设置。插件 hook 和手工配置二选一，避免每次编辑注入重复提醒。仅手工配置 hook 不会自动安装技能正文。
+本版本已移除编辑后进度提醒 hook。若曾把旧版提醒手工加入 `~/.claude/settings.json`，升级时仅移除其中带有 `【dev-flow】` 标识的对应提醒条目，保留其他 hook 和设置。
 
 ## 在 Codex 中使用
 
-Codex 读取技能正文、参考文档和脚本，不使用 `.claude-plugin/` 清单，也不会加载 Claude Code 的 `PostToolUse` hook。因此在 Codex 中，日常流水线、代码走读和按需维护依赖技能规则本身，没有编辑后由客户端强制注入的提醒。
+Codex 读取技能正文、参考文档和脚本，不使用 `.claude-plugin/` 清单。业务节点汇总、子代理独立测试、核心问答和按需维护由技能规则指导；实际代理与命令执行能力取决于当前客户端提供的工具及权限。
 
 Codex 会扫描工作目录到仓库根目录范围内的 `.agents/skills`，以及用户目录下的 `~/.agents/skills`。推荐把本仓库的 `skills/dev-flow` 作为独立技能安装到用户目录，目标结构如下：
 
@@ -132,8 +119,13 @@ $target = "$env:USERPROFILE\.agents\skills\dev-flow"
 
 New-Item -ItemType Directory -Force -Path $target | Out-Null
 Copy-Item -LiteralPath "$source\SKILL.md" -Destination "$target\SKILL.md" -Force
-Copy-Item -LiteralPath "$source\references" -Destination "$target\references" -Recurse -Force
-Copy-Item -LiteralPath "$source\scripts" -Destination "$target\scripts" -Recurse -Force
+foreach ($directory in @('references', 'scripts')) {
+    $destination = Join-Path $target $directory
+    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    foreach ($item in (Get-ChildItem -LiteralPath (Join-Path $source $directory) -Force)) {
+        Copy-Item -LiteralPath $item.FullName -Destination $destination -Recurse -Force
+    }
+}
 ```
 
 目标目录已有同名技能时先核对版本并保留可恢复副本，避免同名的新旧内容同时出现。`SKILL.md` 中的相对链接需要与 `references/`、`scripts/` 一起复制。
@@ -172,8 +164,6 @@ bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all
 skills/dev-flow/SKILL.md        # Claude Code 与 Codex 共用的技能正文
 skills/dev-flow/references/     # 按需加载的维护指南
 skills/dev-flow/scripts/        # gather.sh
-hooks/hooks.json               # 仅 Claude Code 插件使用
-hooks.example.json             # 仅 Claude Code 手工配置使用
 ```
 
 在插件根目录运行本地校验：
@@ -183,7 +173,7 @@ claude plugin validate . --strict
 claude plugin validate .claude-plugin/plugin.json --strict
 ```
 
-另需检查技能 YAML frontmatter、hook JSON、实际 Bash 输出、相对链接，并在隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。Codex 应检查安装目录中的 `SKILL.md` 和参考文件是否完整，无需检查 Claude Code 清单或 hook。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
+另需检查技能 YAML frontmatter、相对链接，并在辅助脚本变动时于隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。Codex 应检查安装目录中的 `SKILL.md` 和参考文件是否完整，无需检查 Claude Code 清单。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
 
 ## 卸载
 
