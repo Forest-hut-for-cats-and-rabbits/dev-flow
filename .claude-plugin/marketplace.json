@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "dev-flow",
-  "description": "Claude Code 轻量开发与理解技能：计划双评审、业务节点、独立测试、核心问答及按需项目记忆",
+  "description": "Claude Code 轻量开发与理解技能：计划双评审、业务节点、技术方案、易错点防护、独立测试、核心问答及按需项目记忆",
   "owner": {
     "name": "Forest-hut-for-cats-and-rabbits"
   },
@@ -9,7 +9,7 @@
     {
       "name": "dev-flow",
       "source": "./",
-      "description": "大需求计划由产品与测试子代理双评审；业务完成后结合代码汇总流程节点，编码结束后由子代理独立测试并给出需求核心问题与答案；按需进行失败重诊断、项目记忆和交接复盘。",
+      "description": "大需求计划由产品与测试子代理双评审；编码完成后独立测试，并汇总业务清单、流程代码、核心技术方案、易错点与防护技术及需求问答；按需进行失败重诊断、项目记忆和交接复盘。",
       "category": "development",
       "keywords": ["productivity", "workflow", "planning", "verification", "chinese"],
       "homepage": "https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow"

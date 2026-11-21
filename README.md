@@ -1,8 +1,8 @@
 # dev-flow
 
-轻量开发与理解技能：大需求计划形成后，由产品与测试两个子代理独立评审；每完成一个业务就结合代码汇总流程节点；编码结束后直接使用子代理独立测试，再给出需求核心问题和答案。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。Claude Code 可直接安装为插件；Codex 可安装同一份技能正文。
+轻量开发与理解技能：大需求计划形成后，由产品与测试两个子代理独立评审；每完成一个业务就结合代码汇总流程节点；编码结束后直接使用子代理独立测试，并交付功能清单、核心技术方案、易错点防护和需求问题答案。对有价值的任务按需保存项目经验，让后续任务能够检索并核对。Claude Code 可直接安装为插件；Codex 可安装同一份技能正文。
 
-A development workflow skill for Claude Code and Codex: product and test plan reviews, business-flow walkthroughs, independent subagent testing, and evidence-backed questions and answers.
+A development workflow skill for Claude Code and Codex: product and test plan reviews, business-flow walkthroughs, independent subagent testing, and evidence-backed completion summaries of features, technical choices, pitfalls, and answers.
 
 ## 日常使用
 
@@ -11,7 +11,8 @@ A development workflow skill for Claude Code and Codex: product and test plan re
 ```text
 按需定位与经验检索 → 简短任务地图 → 大需求计划
 → 产品／测试双评审 → 修订计划 → 业务实现与代码节点汇总
-→ 编码结束 → 子代理独立测试 → 修复与复测 → 核心问题及答案 → 按价值沉淀
+→ 编码结束 → 子代理独立测试 → 修复与复测
+→ 功能清单／业务流程／技术方案／易错点防护／核心问答 → 按价值沉淀
 ```
 
 - 开工时定位任务入口、直接依赖和相关测试，说明目标、调用链、边界及验收方式；信息充分时自动继续。
@@ -19,7 +20,7 @@ A development workflow skill for Claude Code and Codex: product and test plan re
 - 主代理汇总评审依据、修订计划，并在目标、范围、流程、验收或核心实现策略发生实质变化后让两者复核新版。单角色失败重试一次后补跑，仍失败时准确标记缺失状态；关键缺口无法核实时暂停相关实施。仅规划时停在计划阶段，已有实施授权且无未解决阻碍时继续。
 - 每个可独立验收的业务实现后，说明入口、关键判断、数据或状态变化和结果，关联具体文件与函数；重要异常分支一并解释。多个文件共同完成一个业务时合并汇总，只有一个业务时可与交付合并。尚未测试时标注待独立测试。
 - 编码结束后直接调用可用的子代理，按原始需求与验收条件独立运行适当的检查。测试最终修改后的代码，覆盖场景随改动影响选择；发现问题由主代理修复后交回子代理复测。
-- 完工后合并给出业务链路、实际测试证据、未验证项，以及需求核心问题和对应答案。答案引用代码，涉及运行行为时关联测试证据；默认不留题等待用户作答。
+- 完工后合并给出功能完成清单、业务节点与代码、实际采用的关键技术方案、易错点及对应防护、测试证据和未验证项，以及需求核心问题和直接答案。链接相关代码；涉及运行行为时关联测试证据。仅列实际实现和本需求相关内容；简单任务压缩格式，不臆造方案或防护。
 - 子代理不可用或执行受阻时，主代理运行能完成的检查，并明确“未完成独立测试”，不把自测或静态走读称为独立测试通过。委派与报告要求见 [独立测试指南](skills/dev-flow/references/independent-testing.md)。
 - 计划评审中某个角色无法启动时，说明具体缺口和主代理补充检查的范围，不把单一视角的检查称为双评审；存在关键产品决策缺口时先澄清。计划评审细则见 [计划评审指南](skills/dev-flow/references/plan-review.md)。
 - 纯问答、纯解释或仅调整说明文档时不启动代码测试子代理、不强加业务问答；微小代码改动仍进行相称的独立检查，缩短汇总，不强凑测试用例。这些任务不自动新增记忆文档。
