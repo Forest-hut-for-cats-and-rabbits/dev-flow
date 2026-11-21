@@ -1,0 +1,20 @@
+{
+  "name": "dev-flow",
+  "interface": {
+    "displayName": "dev-flow"
+  },
+  "plugins": [
+    {
+      "name": "dev-flow",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

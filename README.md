@@ -131,7 +131,26 @@ claude plugin details dev-flow
 
 ## 在 Codex 中使用
 
-Codex 读取技能正文、参考文档和脚本，不使用 `.claude-plugin/` 清单。大需求计划双评审、业务节点汇总、子代理独立测试、核心问答和按需维护由技能规则指导；实际代理与命令执行能力取决于当前客户端提供的工具及权限。
+本仓库同时包含 Codex CLI 可安装的插件清单和 marketplace。首次添加并安装：
+
+```bash
+codex plugin marketplace add Forest-hut-for-cats-and-rabbits/dev-flow --ref master
+codex plugin marketplace list
+codex plugin list --available --marketplace dev-flow
+codex plugin add dev-flow@dev-flow
+```
+
+CLI 也可输入 `codex` 进入交互界面，再输入 `/plugins` 打开插件浏览器，从 `dev-flow` marketplace 选择并安装。安装后开启新的 Codex 会话，使用 `$dev-flow` 或提出符合技能范围的开发需求。更新本地 marketplace 索引使用：
+
+仓库根的 `marketplace.json` 供 CLI 从 Git marketplace 注册插件；`.agents/plugins/marketplace.json` 使用本地仓库来源，供受支持的 Codex 项目／桌面端发现。两处清单名称相同，更新时保持插件名称和版本描述一致。
+
+```bash
+codex plugin marketplace upgrade dev-flow
+```
+
+Codex CLI、Codex 桌面端和 ChatGPT 插件目录的支持面可能不同；桌面端若需要浏览本地 marketplace，在安装配置后重启应用并从 Plugins 目录选择来源。IDE 插件不支持 Codex plugins，可直接安装下方的独立 Skill。
+
+CLI 安装插件适用于团队复用。若只想给当前用户安装技能，可将本仓库的 `skills/dev-flow` 复制为 `~/.agents/skills/dev-flow`；Codex 会读取其 `SKILL.md`、`references/` 和 `scripts/`。实际代理与命令执行能力仍取决于当前客户端提供的工具及权限。
 
 Codex 会扫描工作目录到仓库根目录范围内的 `.agents/skills`，以及用户目录下的 `~/.agents/skills`。推荐把本仓库的 `skills/dev-flow` 作为独立技能安装到用户目录，目标结构如下：
 
