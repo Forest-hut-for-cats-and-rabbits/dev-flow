@@ -263,9 +263,12 @@ skills/dev-flow/scripts/        # gather.cjs, gather.sh, validate-evidence.js
 在插件根目录运行本地校验：
 
 ```bash
+node --test tests/*.test.cjs
 claude plugin validate . --strict
 claude plugin validate .claude-plugin/plugin.json --strict
 ```
+
+`tests/skill-evals/cases.json` 保存 Claude Code 与 Codex 的手动行为回归场景。每次修改技能触发、评审或验证规则后，在隔离项目的新会话运行相关场景；Node 测试只检查用例结构，不会启动模型，也不能代替运行时评测。运行步骤与判定边界见 [技能行为评测说明](tests/skill-evals/README.md)。
 
 另需检查技能 YAML frontmatter、相对链接，并在辅助脚本变动时于隔离仓库检查混合暂存、未跟踪文件与截断场景。本机版本不能用 `plugin validate` 直接检查 `SKILL.md`，技能需单独检查；插件市场上架所需的 license、图标等目录要求也应另行评估。Codex 应检查安装目录中的 `SKILL.md` 和参考文件是否完整，无需检查 Claude Code 清单。格式校验与场景审阅不能证明模型行为；只有实际会话观察过触发、走读及记忆行为，才称为运行时验证通过。
 

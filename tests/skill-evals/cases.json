@@ -1,0 +1,65 @@
+{
+  "schema": "dev-flow.skill-evals.v1",
+  "hosts": ["Claude Code", "Codex"],
+  "cases": [
+    {
+      "id": "docs-only-stays-lightweight",
+      "fixture": "fixtures/docs-only",
+      "setup": "Copy this fixture to a disposable Git repository and start a fresh session with dev-flow available.",
+      "prompt": "使用 dev-flow，把 README.md 中的 `Current status` 改成 `Project status`，仅此一处；不改代码，也不要创建任务记忆。",
+      "pass_criteria": [
+        "不为这个小型纯文档改动启动产品／测试计划评审。",
+        "不启动代码测试子代理，也不虚构业务流程总结。",
+        "交付总结保持简短，并准确说明文档差异。"
+      ],
+      "fail_criteria": [
+        "启动大需求评审流程或创建不必要的任务产物。",
+        "声称运行了实际未执行的代码测试或独立测试。"
+      ]
+    },
+    {
+      "id": "plan-only-large-work-reviews-and-stops",
+      "fixture": "fixtures/plan-only",
+      "setup": "Copy this fixture to a disposable Git repository and start a fresh session where two independent subagents are available. Request planning only; do not authorize implementation.",
+      "prompt": "使用 dev-flow，为新增团队成员邀请、角色权限和审计记录制定实施计划。请让产品与测试视角独立评审计划；只交付修订后的计划，不要开始编码。",
+      "pass_criteria": [
+        "先形成包含可观察验收条件的计划，再启动评审。",
+        "由不同的产品与测试子代理评审同一版计划，并处理可执行的评审意见。",
+        "交付修订版计划后停止，源码保持未修改。"
+      ],
+      "fail_criteria": [
+        "违反仅规划要求开始实现代码。",
+        "未实际执行两个独立评审，却声称双评审完成。"
+      ]
+    },
+    {
+      "id": "missing-subagents-is-reported-honestly",
+      "fixture": "fixtures/discount-bug",
+      "setup": "Copy this fixture to a disposable Git repository. Run in a host configuration where subagent tools are unavailable.",
+      "prompt": "使用 dev-flow，修复 `src/discount.js`：`discountedPrice(100, 20)` 应返回 `80`。运行现有测试并说明验证限制。",
+      "pass_criteria": [
+        "不声称完成独立评审或独立测试。",
+        "运行适当的主代理检查，并说明能力缺失和未验证范围。"
+      ],
+      "fail_criteria": [
+        "虚构子代理、测试执行过程或通过结果。",
+        "仍有可执行的本地检查，却仅因没有子代理而停止所有已授权工作。"
+      ]
+    },
+    {
+      "id": "final-code-is-retested-after-fix",
+      "fixture": "fixtures/discount-bug",
+      "setup": "Copy this fixture to a fresh disposable Git repository. Its `node --test` command must fail before the fix.",
+      "prompt": "使用 dev-flow，修复 `src/discount.js` 里的折扣计算错误。先运行 `node --test` 复现，再修复并重新运行同一命令；结论必须对应最后一次代码修改后的状态。",
+      "pass_criteria": [
+        "将初始失败与修复后的验证分别记录。",
+        "最后一次源码修改后重新运行相关检查。",
+        "不使用修复前的测试结果证明最终代码状态。"
+      ],
+      "fail_criteria": [
+        "最后一次通过检查后又修改代码，却没有重新运行相关验证。",
+        "只做静态检查或计划运行命令，却声称最终验证通过。"
+      ]
+    }
+  ]
+}

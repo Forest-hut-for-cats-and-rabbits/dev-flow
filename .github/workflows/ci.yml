@@ -10,6 +10,8 @@ jobs:
           node-version: '20'
       - name: 校验版本一致性
         run: node scripts/check-version.cjs
+      - name: 证据校验器单测与评测用例检查
+        run: node --test tests/*.test.cjs
       - name: 校验证据脚本语法
         run: node --check skills/dev-flow/scripts/validate-evidence.js
       - name: 校验所有 Markdown JSON 块合法性
