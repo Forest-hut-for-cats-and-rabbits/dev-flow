@@ -24,8 +24,18 @@ A development workflow skill for Claude Code and Codex: product and test plan re
 - 子代理不可用或执行受阻时，主代理运行能完成的检查，并明确“未完成独立测试”，不把自测或静态走读称为独立测试通过。委派与报告要求见 [独立测试指南](skills/dev-flow/references/independent-testing.md)。
 - 计划评审中某个角色无法启动时，说明具体缺口和主代理补充检查的范围，不把单一视角的检查称为双评审；存在关键产品决策缺口时先澄清。计划评审细则见 [计划评审指南](skills/dev-flow/references/plan-review.md)。
 - 纯问答、纯解释或仅调整说明文档时不启动代码测试子代理、不强加业务问答；微小代码改动仍进行相称的独立检查，缩短汇总，不强凑测试用例。这些任务不自动新增记忆文档。
+- 任务需要双评审、独立测试、完工声明或长期经验沉淀时，使用 `dev-flow.*.v1` 结构记录验证、声明和评审闭环；可选脚本 `validate-evidence.js` 只检查字段、引用和文件存在性，不证明命令确实执行。
+
+结构字段的唯一权威定义见 [证据 Schema](skills/dev-flow/references/evidence-schema.md)。其他文档只引用该文件，避免同一字段出现多个版本。
 
 用户要求先讨论、暂停或禁止写文档时，以用户要求为准。技能不会自动切换模型、调整推理配置或提交 Git。
+
+### 环境依赖
+
+- 默认技能流程和 `gather.sh`：Node.js（用于证据校验）、Bash 或 Git Bash
+- 证据校验与 CI 检查脚本：Node.js >= 20.0.0
+- Windows：`gather.sh` 需在 Git Bash 或 WSL 中运行；证据校验为 Node 脚本
+- 双评审和独立测试仍取决于宿主是否提供子代理能力；没有时按 `dev-flow.capability.v1` 记录降级状态
 
 ## 完工时会收到什么
 
@@ -39,6 +49,9 @@ A development workflow skill for Claude Code and Codex: product and test plan re
 | 易错点与防护 | 哪些边界或失败场景容易出错，会造成什么后果，实际用了什么技术处理，还有哪些缺口？ |
 | 验证证据与限制 | 主代理和测试子代理分别做了哪些检查，结果如何，哪些场景仍未验证？ |
 | 核心问题与答案 | 本需求最值得理解的业务规则、设计选择或异常处理是什么？直接给出答案及代码依据。 |
+| 完成声明状态 | 哪些功能已验证、部分验证、未验证或无证据？对应哪些检查编号？ |
+
+完成声明按 `dev-flow.claims.v1` 记录。`verified` 声明至少关联一条通过的检查；声称独立验证时，还必须记录可用的隔离子代理和子代理执行的通过检查。校验脚本会核对整体 `overall` 是否被夸大。
 
 例如，假设某个订单功能实际采用了以下方案，交付时可以这样关联业务节点、技术选择和易错点。下表仅为格式示意，不表示本技能已实现或测试了订单业务：
 
@@ -80,7 +93,7 @@ docs/dev-flow/
 
 交接保存当前有效状态，不追加整段历史；任务结束后更新完成状态。复盘仅依据实际可见或指定资料，不自动扫描所有聊天。长期规则或技能的修改须有明确请求，并先备份；不会把一次偶然错误自动升级为全局约束。
 
-这些记录用于改善上下文与经验复用，不会训练模型参数，也不保证模型自动变强。默认采用 Markdown、索引和关键词检索，不需要向量数据库、后台服务或额外运行依赖。
+这些记录用于改善上下文与经验复用，不会训练模型参数，也不保证模型自动变强。默认采用 Markdown、索引和关键词检索，不需要向量数据库或后台服务；快照和证据校验需要 Node.js，Bash 脚本仅作兼容入口。
 
 ## 安装与生效
 
@@ -184,9 +197,10 @@ foreach ($directory in @('references', 'scripts')) {
 
 ## 辅助脚本
 
-`skills/dev-flow/scripts/gather.sh` 收集当前 Git 仓库快照。它在目标项目中运行，不会自动识别“本次会话”的改动。先通过 `claude plugin list` 确定 Claude Code 插件路径；从 Codex 用户目录安装时，脚本位于 `~/.agents/skills/dev-flow/scripts/`：
+`skills/dev-flow/scripts/gather.cjs` 是推荐的跨平台快照脚本；`gather.sh` 保留为 Bash 环境下的兼容入口。两者都在目标项目中运行，不会自动识别“本次会话”的改动。先通过 `claude plugin list` 确定 Claude Code 插件路径；从 Codex 用户目录安装时，脚本位于 `~/.agents/skills/dev-flow/scripts/`：
 
 ```bash
+node "<插件目录>/skills/dev-flow/scripts/gather.cjs" all
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" auto
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" staged
 bash "<插件目录>/skills/dev-flow/scripts/gather.sh" all
@@ -207,13 +221,43 @@ bash "$HOME/.claude/skills/dev-flow/skills/dev-flow/scripts/gather.sh" all
 
 快照不证明“这些都是本次会话修改”，也不证明测试通过。结合初始状态与实际编辑记录归纳，无法区分时明确说明；脚本报错或空输出不能被当作没有改动。
 
+`skills/dev-flow/scripts/validate-evidence.js` 是可选证据校验脚本。它扫描指定 Markdown 中的 `json` 围栏块（或直接读取 JSON 文件），检查：
+
+- `dev-flow.capability.v1` 的宿主能力是否与子代理声明一致；
+- `dev-flow.verification.v1` 的命令、退出码、日志、代码状态和未执行原因；
+- `dev-flow.claims.v1` 的 `verified` 声明是否有通过的检查支撑，整体结论是否夸大；
+- `dev-flow.findings.v1` 的阻碍项是否闭合，需要复验的评审项是否有关联检查；
+- `dev-flow.learnings.v1` 是否有来源与失效条件。
+
+```bash
+node "$HOME/.agents/skills/dev-flow/scripts/validate-evidence.js" docs/dev-flow/tasks/2026-01-01-demo.md --root .
+node "$HOME/.agents/skills/dev-flow/scripts/validate-evidence.js" docs/dev-flow/tasks/*.md --root . --json
+```
+
+它只能证明记录内部自洽且引用的日志文件存在，**不能证明命令真的执行过**，也不能替代子代理测试或人工核对。未提交代码的检查必须记录 `tested_at` 与 `code_fingerprint`，已提交代码的检查必须记录 `commit`；`code_state: unknown` 不能标记 `passed`。指纹可用 `git diff | git hash-object --stdin` 生成。
+
+以下边界**有意未覆盖**，需要人工或后续工具补足：
+- 日志的 `mtime` 与 `tested_at` 的时间关系；
+- `commit` 是否真实存在于当前仓库；
+- `code_fingerprint` 是否与当前工作区一致；
+- 日志内容是否真由所写命令产生。
+
+因此它能拦住明显的字段缺失、引用断链和声明夸大，但拦不住“填旧日志 + 编指纹”的记录；这类记录仍需实际测试或人工核对。
+
+本地执行以下校验：
+
+```bash
+node scripts/check-json-blocks.cjs
+node scripts/check-version.cjs
+```
+
 ## 结构与校验
 
 ```text
 .claude-plugin/                 # Claude Code 插件及市场清单
 skills/dev-flow/SKILL.md        # Claude Code 与 Codex 共用的技能正文
 skills/dev-flow/references/     # 按需加载的维护指南
-skills/dev-flow/scripts/        # gather.sh
+skills/dev-flow/scripts/        # gather.cjs, gather.sh, validate-evidence.js
 ```
 
 在插件根目录运行本地校验：

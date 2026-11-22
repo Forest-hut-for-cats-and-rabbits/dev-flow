@@ -1,0 +1,16 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 校验版本一致性
+        run: node scripts/check-version.cjs
+      - name: 校验证据脚本语法
+        run: node --check skills/dev-flow/scripts/validate-evidence.js
+      - name: 校验所有 Markdown JSON 块合法性
+        run: node scripts/check-json-blocks.cjs

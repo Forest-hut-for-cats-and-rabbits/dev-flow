@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dev-flow",
-  "version": "0.5.0",
-  "description": "大需求计划由产品与测试子代理双评审；编码完成后独立测试，并汇总业务清单、流程代码、核心技术方案、易错点与防护技术及需求问答；按需进行失败重诊断、项目记忆和交接复盘。",
+  "version": "0.6.0",
+  "description": "大需求计划由产品与测试子代理双评审；编码完成后独立测试，并汇总可核对的验证证据、完成声明状态、业务清单、核心技术方案与问答；可选轻量校验脚本防止伪造与夸大；按需进行失败重诊断、项目记忆和交接复盘。",
   "author": {
     "name": "Forest-hut-for-cats-and-rabbits"
   },
