@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dev-flow",
   "version": "0.6.0",
-  "description": "大需求计划由产品与测试子代理双评审；编码后按业务风险独立测试原始问题、关键异常与受影响回归，提供覆盖证据及业务流程、技术方案、防护与问答；按需进行失败重诊断、项目记忆和交接复盘。",
+  "description": "大需求计划由产品与测试子代理双评审；编码后按业务风险独立测试原始问题、关键异常与受影响回归，提供可校验的结构化证据、完成声明及业务流程、技术方案、防护与问答；按需进行失败重诊断、项目记忆和交接复盘。",
   "author": {
     "name": "Forest-hut-for-cats-and-rabbits"
   },

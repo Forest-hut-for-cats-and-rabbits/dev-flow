@@ -1,0 +1,7 @@
+{
+  "name": "dev-flow-discount-eval",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
