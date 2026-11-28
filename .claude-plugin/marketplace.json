@@ -9,7 +9,7 @@
     {
       "name": "dev-flow",
       "source": "./",
-      "description": "大需求计划由产品与测试子代理双评审；编码完成后独立测试，并汇总业务清单、流程代码、核心技术方案、易错点与防护技术及需求问答；按需进行失败重诊断、项目记忆和交接复盘。",
+      "description": "大需求计划由产品与测试子代理双评审；编码后按业务风险独立测试原始问题、关键异常与受影响回归，提供覆盖证据及业务流程、技术方案、防护与问答；按需进行失败重诊断、项目记忆和交接复盘。",
       "category": "development",
       "keywords": ["productivity", "workflow", "planning", "verification", "chinese"],
       "homepage": "https://github.com/Forest-hut-for-cats-and-rabbits/dev-flow"
